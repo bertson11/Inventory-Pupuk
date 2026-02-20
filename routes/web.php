@@ -1,8 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+// AUTH
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\DashboardController;
+
+// ADMIN CONTROLLERS
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -10,38 +20,52 @@ use App\Http\Controllers\DashboardController;
 |--------------------------------------------------------------------------
 */
 
-// Route untuk halaman utama (redirect ke login atau dashboard)
+// ==============================
+// AUTH
+// ==============================
+
 Route::get('/', function () {
-    if (\Illuminate\Support\Facades\Auth::check()) {
-        return redirect()->route('dashboard');
-    }
     return redirect()->route('login');
 });
 
-// Route untuk guest (belum login)
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
-});
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login.process');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Route untuk yang sudah login
-Route::middleware('auth')->group(function () {
-    
-    // Dashboard utama
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Dashboard berdasarkan role (optional)
-    Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
-    Route::get('/dashboard/krani', [DashboardController::class, 'krani'])->name('dashboard.krani');
-    
-    // API endpoint untuk data real-time
-    Route::get('/api/dashboard/stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
-    
-    // Logout
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-});
 
-// Route fallback untuk 404
-Route::fallback(function () {
-    return view('errors.404');
-});
+// ==============================
+// ADMIN AREA
+// ==============================
+
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware('auth')
+    ->group(function () {
+
+        // DASHBOARD
+        Route::get('/dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
+            
+        // REALTIME DATA API (TAMBAHKAN INI!)
+        Route::get('/realtime-data', [DashboardController::class, 'getRealtimeData'])
+            ->name('realtime');
+
+        // MASTER DATA
+        Route::resource('products', ProductController::class);
+        Route::resource('suppliers', SupplierController::class);
+        Route::resource('categories', CategoryController::class);
+        Route::resource('users', UserController::class);
+
+        // TRANSACTIONS
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/', [TransactionController::class, 'index'])->name('index');
+            Route::get('/pending', [TransactionController::class, 'pending'])->name('pending');
+            Route::post('/{id}/approve', [TransactionController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [TransactionController::class, 'reject'])->name('reject');
+        });
+
+        // REPORTS
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/stock', [ReportController::class, 'stock'])->name('reports.stock');
+        Route::get('/reports/transactions', [ReportController::class, 'transactions'])->name('reports.transactions');
+    });

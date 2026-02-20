@@ -23,7 +23,7 @@
 
         {{-- Logo --}}
         <div class="text-center mb-6">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="mx-auto w-16 mb-2">
+            <img src="{{ asset(path: 'images/logo.png') }}" alt="Logo" class="mx-auto w-16 mb-2">
             <h1 class="text-xl font-semibold text-gray-700">LOGIN</h1>
         </div>
 
@@ -39,15 +39,15 @@
 
             {{-- Username --}}
             <div>
-                <label class="block text-sm text-gray-600 mb-1">Username</label>
+                <label class="block text-sm text-gray-600 mb-1">Email</label>
                 <input 
-                    type="text" 
-                    name="username"
-                    value="{{ old('username') }}"
+                    type="email" 
+                    name="email"
+                    value="{{ old('email') }}"
                     required
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                 >
-                @error('username')
+                @error('email')
                     <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                 @enderror
             </div>

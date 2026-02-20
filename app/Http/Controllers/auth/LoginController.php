@@ -22,39 +22,30 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // Validasi input
-        $request->validate([
-            'email' => 'required|string',
-            'password' => 'required|string',
-        ]);
+    $request->validate([
+        'email' => 'required|string',
+        'password' => 'required|string',
+    ]);
 
-        // Attempt login
-        $credentials = $request->only('email', 'password');
-        
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            // Regenerate session untuk keamanan
-            $request->session()->regenerate();
+    $credentials = $request->only('email', 'password');
 
-            // Redirect ke dashboard
-            return redirect()->intended('dashboard');
+    if (Auth::attempt($credentials, $request->filled('remember'))) {
+
+        $request->session()->regenerate();
+
+        // Cek apakah admin
+        if (Auth::user()->role !== 'admin') {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'Akses hanya untuk admin.',
+            ]);
         }
 
-        // Kalau gagal
-        throw ValidationException::withMessages([
-            'email' => 'Email atau password yang Anda masukkan salah.',
-        ]);
-    }
+        return redirect()->intended(route('admin.dashboard'));
+    }   
 
-    /**
-     * Proses logout
-     */
-    public function logout(Request $request)
-    {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/');
+    throw \Illuminate\Validation\ValidationException::withMessages([
+        'email' => 'Email atau password yang Anda masukkan salah.',
+    ]);
     }
 }
